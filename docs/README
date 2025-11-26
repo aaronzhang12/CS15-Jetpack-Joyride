@@ -1,0 +1,49 @@
+Overview:
+My indy project is a side-scrolling running game inspired by "Jetpack Joyride". App launches the application
+and sets the stage. The PaneOrganizer class is the highest graphical class and initializes the user interface elements
+as well as the game. The Game class is the highest logical class and manages the main gameplay timeline, including
+score tracking, collision detection, and spawning obstacles and power-ups/transformations by using a world generator
+algorithm. The TransformationType enum stores all the types of vehicles, and is used by the queuedTransformation class
+which is a wrapper for the transformation vehicle type (instead of directly transforming when collecting powerup).
+The WorldGenerator class is the game’s main algorithm responsible for procedural generation of obstacles (like Zapper,
+Rocket, Laser) according to changing game speed and difficulty parameters, and other extensive condition checking.
+Vehicles are represented by classes that extend the abstract Vehicle class (e.g., Avatar, Stomper, Motorcycle, Dragon,
+GravitySuit) and each have unique movement mechanics. Different powerups (vehicle, zoom, shield, and slowmo) are able
+to be collected and provide special abilities to the vehicles.
+
+Design Choices:
+Polymorphism (Inheritance) for Vehicles and Obstacles:
+I chose to use inheritance for vehicles, powerups, and obstacles.  All extended abstract classes with multiple
+subclasses representing different vehicle types. This allows each to share traits while implementing distinct behaviors
+for movement and input handling. The method calls can then be more generic. For vehicles, all shared a velocity,
+thrustActive, a vehicleGroup visual variable, but had unique movement, graphical removal, and keypress mechanics. For
+obstacles, all shared a vehicle, pane, and gamespeed reference, an active flag, but had unique movement and collision
+detection methods. For powerups, all were represented by an icon modeled by a javafx.scene.Group, moved and collided
+the same way, but had different specific visuals and triggered different special abilities.
+
+Enum for Transformation, Vehicle, and Obstacle Types:
+The TransformationType includes all possible vehicle transformations. Instead of using strings or constants, the
+transformation enum provides direct mapping to methods that create the appropriate vehicle instances corresponding to
+each type. Vehicle type and obstacle type enums list out all possible types and getter methods for the types allow
+for proper object type checking for conditional obstacle generation/mechanics in game and algorithm.
+
+Data Structures (Queues and Arrays):
+A Queue<QueuedTransformation> is a wrapper of the transformation to store upcoming vehicle transformations types, and
+is fed into the queue so when collision is detected, the game knows the transformation to perform. Using a FIFO queue,
+transformations occur in the order they are collected. Both shields and vehicle transformations are able to be queued
+infinitely. For obstacles and power-ups, ArrayList allows looping/iterating when checking collisions and removing
+expired obstacles and power ups.
+
+Semi-Random World Generation:
+The WorldGenerator uses a combination of random values and condition checking (like MAX_SIMULTANEOUS_OBSTACLES and
+MAX_Y_AXIS_COVERAGE) to produce a balanced, semi-random distribution of obstacles, and model the original game. This
+ensures playability and prevents scenarios where the character has no playable space.
+
+Locking and Unlocking Game Speed:
+During power-ups or transformations, the WorldGenerator can lock or unlock the game speed. This allows players to adapt
+to transformations, collisions, and prevent sudden difficulty changes. This design is more flexible than hard-coding
+speed changes into the main game.
+
+Hours Spent: 60
+
+Known Bugs: The high score label doesn't show when opening app, but after completing a run or restarting game, it shows
