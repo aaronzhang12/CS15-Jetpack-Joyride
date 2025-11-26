@@ -1,49 +1,83 @@
-Overview:
-My indy project is a side-scrolling running game inspired by "Jetpack Joyride". App launches the application
-and sets the stage. The PaneOrganizer class is the highest graphical class and initializes the user interface elements
-as well as the game. The Game class is the highest logical class and manages the main gameplay timeline, including
-score tracking, collision detection, and spawning obstacles and power-ups/transformations by using a world generator
-algorithm. The TransformationType enum stores all the types of vehicles, and is used by the queuedTransformation class
-which is a wrapper for the transformation vehicle type (instead of directly transforming when collecting powerup).
-The WorldGenerator class is the game’s main algorithm responsible for procedural generation of obstacles (like Zapper,
-Rocket, Laser) according to changing game speed and difficulty parameters, and other extensive condition checking.
-Vehicles are represented by classes that extend the abstract Vehicle class (e.g., Avatar, Stomper, Motorcycle, Dragon,
-GravitySuit) and each have unique movement mechanics. Different powerups (vehicle, zoom, shield, and slowmo) are able
-to be collected and provide special abilities to the vehicles.
+Jetpack Joyride (Indy) – JavaFX Edition
+=======================================
 
-Design Choices:
-Polymorphism (Inheritance) for Vehicles and Obstacles:
-I chose to use inheritance for vehicles, powerups, and obstacles.  All extended abstract classes with multiple
-subclasses representing different vehicle types. This allows each to share traits while implementing distinct behaviors
-for movement and input handling. The method calls can then be more generic. For vehicles, all shared a velocity,
-thrustActive, a vehicleGroup visual variable, but had unique movement, graphical removal, and keypress mechanics. For
-obstacles, all shared a vehicle, pane, and gamespeed reference, an active flag, but had unique movement and collision
-detection methods. For powerups, all were represented by an icon modeled by a javafx.scene.Group, moved and collided
-the same way, but had different specific visuals and triggered different special abilities.
+Overview
+--------
+Indy is a side‑scrolling runner inspired by the original **Jetpack Joyride**.  
+You control a jetpack‑equipped character flying through a lab full of zappers, rockets, lasers, and power‑ups.  
+The game is built in JavaFX with a focus on smooth movement, readable visuals, and gradually increasing difficulty.
 
-Enum for Transformation, Vehicle, and Obstacle Types:
-The TransformationType includes all possible vehicle transformations. Instead of using strings or constants, the
-transformation enum provides direct mapping to methods that create the appropriate vehicle instances corresponding to
-each type. Vehicle type and obstacle type enums list out all possible types and getter methods for the types allow
-for proper object type checking for conditional obstacle generation/mechanics in game and algorithm.
+Core Gameplay
+-------------
+- **Goal**: Survive as long as possible while dodging obstacles and collecting power‑ups to push your high score higher.
+- **Controls**:  
+  - `SPACE` – Hold to thrust upward, release to fall.  
+  - `P` – Pause / resume the game.  
+  - Mouse – Click the on‑screen buttons to pause, restart, or quit.
+- **Score**: Increases automatically as you travel farther and as the game speed ramps up.
+- **Game Over**: Hitting an obstacle without an active shield ends the run; your high score is saved to `jetpackjoyride.txt`.
 
-Data Structures (Queues and Arrays):
-A Queue<QueuedTransformation> is a wrapper of the transformation to store upcoming vehicle transformations types, and
-is fed into the queue so when collision is detected, the game knows the transformation to perform. Using a FIFO queue,
-transformations occur in the order they are collected. Both shields and vehicle transformations are able to be queued
-infinitely. For obstacles and power-ups, ArrayList allows looping/iterating when checking collisions and removing
-expired obstacles and power ups.
+Power‑Ups
+---------
+- **Vehicle Power‑Up**  
+  - Transforms you into special vehicles (Motorcycle, Stomper, Dragon, GravitySuit, etc.).  
+  - Each vehicle has unique physics and movement, giving short bursts of different play styles.
 
-Semi-Random World Generation:
-The WorldGenerator uses a combination of random values and condition checking (like MAX_SIMULTANEOUS_OBSTACLES and
-MAX_Y_AXIS_COVERAGE) to produce a balanced, semi-random distribution of obstacles, and model the original game. This
-ensures playability and prevents scenarios where the character has no playable space.
+- **Shield Power‑Up**  
+  - Grants one or more shield charges.  
+  - A glowing circle appears around the character; each shield absorbs a single hit.  
+  - When a shield absorbs damage, the game briefly slows and then ramps back up so you have time to react.
 
-Locking and Unlocking Game Speed:
-During power-ups or transformations, the WorldGenerator can lock or unlock the game speed. This allows players to adapt
-to transformations, collisions, and prevent sudden difficulty changes. This design is more flexible than hard-coding
-speed changes into the main game.
+- **Zoom Power‑Up**  
+  - Dramatically increases speed and grants temporary invincibility.  
+  - A jet‑flame / triangle visual appears behind the avatar and the world scrolls faster while you zoom.
 
-Hours Spent: 60
+- **Slow‑Mo Power‑Up**  
+  - Temporarily slows the entire game (including the parallax background) for easier dodging.  
+  - A soft bubble visual surrounds the character while slow‑mo is active.
 
-Known Bugs: The high score label doesn't show when opening app, but after completing a run or restarting game, it shows
+Obstacles & Difficulty
+----------------------
+- **Zappers** – Static or angled electric barriers that block portions of the vertical space.  
+- **Rockets** – Chase in from the right with a warning indicator before impact.  
+- **Lasers** – Show two warning blocks first, then fire a solid beam between them for a short duration.
+
+The `WorldGenerator` gradually ramps up game speed and obstacle density while enforcing:
+- A maximum number of simultaneous obstacles.
+- Limits on how much of the vertical space is blocked at once.
+- Special patterns when you are in certain vehicles (e.g., motorcycle‑friendly layouts).
+
+To reduce cheap deaths, the game:
+- Briefly slows down after shielded hits and then smoothly recovers to the previous speed.  
+- Clears active obstacles on major transformations so you can adjust to the new vehicle.  
+- Uses a transformation queue so multiple vehicle power‑ups can be collected and used in order.
+
+Visuals & UI
+------------
+- **Parallax Background**: Stars and streaks scroll at different speeds to give a sense of forward motion even when the screen is relatively empty.
+- **HUD**:  
+  - Score, high score, shield count, and upcoming transformations are displayed at the top.  
+  - A short helper message explains the basic controls.  
+- **Controls Bar**: Styled buttons at the bottom for **Pause/Resume**, **Restart**, and **Quit**.
+
+Running the Game
+----------------
+Requirements:
+- JDK 17+  
+- Maven (project is configured with `javafx-maven-plugin`)
+
+From the project root (`cs15-jetpack-joyride`):
+- Run the game: `mvn clean javafx:run`  
+- Run tests: `mvn test`
+
+High‑Level Architecture (for developers)
+----------------------------------------
+- `App` – JavaFX entry point; creates the main window and scene.  
+- `PaneOrganizer` – Top‑level UI layout (game pane, HUD, control buttons, borders).  
+- `Game` – Core game loop: movement, spawning, collision detection, score, power‑ups, pause logic.  
+- `WorldGenerator` – Procedural obstacle generation and difficulty/speed management.  
+- `Vehicle` hierarchy – Avatar and transformation vehicles with different movement mechanics.  
+- `Obstacle` hierarchy – Zapper, Rocket, Laser, etc.  
+- `PowerUp` hierarchy – Vehicle, Shield, Zoom, Slow‑Mo, plus their visuals and activation behavior.
+
+If you are extending the game, `Game`, `WorldGenerator`, and the `Vehicle`/`Obstacle`/`PowerUp` families are the main places to plug in new mechanics, visuals, or level logic.
